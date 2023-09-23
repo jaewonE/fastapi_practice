@@ -1,40 +1,45 @@
-from typing import Optional
+from typing import Optional, List
+from sqlalchemy.orm import Session
 
 from models.todo import Todo
-from db import todo_list
-from schemas.todo import TodoUpdate
+from schemas.todo import TodoUpdate, TodoInput
 
 class TodoService:
     def __init__(self):
-        pass
+        self.model = Todo
 
-    def _get_index_by_id(self, todo_id: int) -> Optional[int]:
-        for i in range(len(todo_list)):
-            if todo_list[i].id == todo_id:
-                return i
-        return None
-
-    def find_todo_by_id(self, todo_id: int) -> Optional[Todo]:
-        index = self._get_index_by_id(todo_id)
-        if index == None:
-            return None
-        return todo_list[index]
+    def create_todo(self, db:Session, todo: TodoInput) -> Todo:
+        new_todo = self.model(**todo.dict())
+        db.add(new_todo)
+        db.commit()
+        db.refresh(new_todo)
+        return new_todo
     
-    def update_todo_by_id(self, todo_id:int, updateTodo: TodoUpdate)->bool:
-        index = self._get_index_by_id(todo_id)
-        if index == None:
+    def get_todo_list(self, db:Session, limit: int = None) -> List[Todo]:
+        if limit == None:
+            return db.query(self.model).all()
+        return db.query(self.model).limit(limit).all()
+
+    def find_todo(self, db: Session, todo_id: int) -> Optional[Todo]:
+        return db.query(self.model).filter(self.model.id == todo_id).first()
+    
+    def update_todo_by_id(self, db:Session, todo_id:int, todo_update: TodoUpdate)->bool:
+        todo = db.query(self.model).filter(self.model.id == todo_id).first()
+        if todo == None:
             return False
-        updated_todo = Todo.parse_obj({
-            **todo_list[index].dict(),
-            **updateTodo.dict(),
-        })
-        print(updated_todo.dict())
-        todo_list[index] = updated_todo
+        
+        for key, value in todo_update.dict(exclude_unset=True).items():
+            setattr(todo, key, value)
+        
+        db.add(todo)
+        db.commit()
+        db.refresh(todo)
         return True
 
-    def delete_todo_by_id(self, todo_id:int)->bool:
-        index = self._get_index_by_id(todo_id)
-        if index == None:
+    def delete_todo(self, db:Session, todo_id: int) -> bool:
+        todo = db.query(self.model).filter(self.model.id == todo_id).first()
+        if todo == None:
             return False
-        todo_list.pop(index)
+        db.delete(todo)
+        db.commit()
         return True

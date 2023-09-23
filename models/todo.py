@@ -1,14 +1,19 @@
-from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy import Boolean, Column, Integer, String
 
-class BaseId(BaseModel):
-    id: int
+from db import DB_Base
 
-class TodoSetable(BaseModel):
-    title: str
-    description: Optional[str] = None
-    completed: bool = False
+class Todo(DB_Base):
+    __tablename__ = "todo"
 
-class Todo(BaseId, TodoSetable):
-    class config:
-        orm_mode = True
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    description = Column(String, index=True)
+    completed = Column(Boolean, default=False)
+
+
+# CREATE TABLE todo (
+#     id INT PRIMARY KEY AUTO_INCREMENT,
+#     title VARCHAR(30) NOT NULL,
+#     description TEXT,
+#     completed BOOLEAN NOT NULL DEFAULT 0
+# );

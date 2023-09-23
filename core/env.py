@@ -10,6 +10,3 @@ class Env:
   
   def get(self, key: str) -> Optional[str]:
     return os.environ.get(key)
-  
-  def get_db_url(self) -> str:
-    pass
