@@ -15,9 +15,11 @@ SessionLocal = create_db_sessionLocal()
 DB_Base = declarative_base()
 
 # Dependency
-def get_db():
+# try finally문을 통해 db 연결이 종료되거나 문제가 생겼을 때 무조건 close 해준다.
+# db 연결 과정에서 생긴 문제가 아닌 경우 아래에 except를 추가하여도 처리되지 않는다.
+def get_db_session():
     db = SessionLocal()
     try:
-        yield db
+        return db
     finally:
         db.close()
